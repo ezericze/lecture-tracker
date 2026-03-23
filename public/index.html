@@ -449,7 +449,6 @@
 
   <!-- Footer actions -->
   <div class="footer-actions">
-    <button class="btn-outline danger" id="reset-btn">Reset Watched</button>
     <button class="btn-outline" id="export-btn">Export CSV</button>
   </div>
 
@@ -814,14 +813,6 @@ document.getElementById('new-module-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') document.getElementById('add-module-btn').click();
 });
 
-// ── Reset watched ──────────────────────────────────────────────────────────
-document.getElementById('reset-btn').addEventListener('click', () => {
-  if (!confirm('Mark all lectures as unwatched?')) return;
-  state.modules.forEach(m => m.lectures.forEach(l => l.watched = false));
-  scheduleSave();
-  renderAll();
-  toast('All lectures reset to unwatched');
-});
 
 // ── Export CSV ─────────────────────────────────────────────────────────────
 document.getElementById('export-btn').addEventListener('click', () => {
