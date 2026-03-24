@@ -1,4 +1,6 @@
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
+
+const redis = Redis.fromEnv();
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -12,7 +14,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid request body' });
     }
 
-    await kv.set('tracker_data', body);
+    await redis.set('tracker_data', body);
     return res.status(200).json({ ok: true });
   } catch (err) {
     console.error('Failed to save tracker data:', err);

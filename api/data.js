@@ -1,4 +1,6 @@
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
+
+const redis = Redis.fromEnv();
 
 function uid() {
   return Math.random().toString(36).slice(2, 9) + Date.now().toString(36);
@@ -42,7 +44,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const data = await kv.get('tracker_data');
+    const data = await redis.get('tracker_data');
     if (!data) {
       return res.status(200).json(defaultData());
     }
