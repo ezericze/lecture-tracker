@@ -1,6 +1,6 @@
-import { Redis } from '@upstash/redis';
+import Redis from 'ioredis';
 
-const redis = Redis.fromEnv();
+const redis = new Redis(process.env.REDIS_URL);
 
 function uid() {
   return Math.random().toString(36).slice(2, 9) + Date.now().toString(36);
@@ -44,11 +44,11 @@ export default async function handler(req, res) {
   }
 
   try {
-    const data = await redis.get('tracker_data');
-    if (!data) {
+    const raw = await redis.get('tracker_data');
+    if (!raw) {
       return res.status(200).json(defaultData());
     }
-    return res.status(200).json(data);
+    return res.status(200).json(JSON.parse(raw));
   } catch (err) {
     console.error('Failed to read tracker data:', err);
     return res.status(500).json({ error: 'Failed to read data' });
