@@ -106,14 +106,44 @@
   .progress-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width .4s ease; }
 
   /* ── Section title ── */
+  .section-title-row { display: flex; align-items: center; gap: 8px; margin: 28px 0 12px; }
   .section-title {
     font-size: 13px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: .06em;
     color: var(--muted);
-    margin: 28px 0 12px;
+    margin: 0;
   }
+  #reorder-toggle {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 5px;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: border-color .15s, color .15s, background .15s;
+  }
+  #reorder-toggle.active { border-color: var(--accent); color: var(--accent); background: var(--green-bg); }
+
+  /* ── Drag handles ── */
+  .drag-handle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    color: var(--border);
+    cursor: grab;
+    font-size: 16px;
+    flex-shrink: 0;
+    user-select: none;
+  }
+  .drag-mode .drag-handle { display: flex; }
+  .drag-mode .module-card { cursor: default; }
+  .module-card.dragging { opacity: 0.35; }
+  .module-card.drag-over { outline: 2px solid var(--accent); outline-offset: -2px; }
 
   /* ── Pacing panel ── */
   .pacing-panel { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
@@ -454,7 +484,10 @@
   </div>
 
   <!-- Modules -->
-  <p class="section-title">Modules</p>
+  <div class="section-title-row">
+    <button id="reorder-toggle">⇅ Reorder</button>
+    <p class="section-title">Modules</p>
+  </div>
   <div class="module-list" id="module-list"></div>
 
   <!-- Add module -->
@@ -632,6 +665,13 @@ function buildModuleEl(mod, idx) {
   // Header
   const hdr = document.createElement('div');
   hdr.className = 'module-header';
+
+  const dragHandle = document.createElement('div');
+  dragHandle.className = 'drag-handle';
+  dragHandle.textContent = '⠿';
+  dragHandle.addEventListener('mousedown', () => { card.draggable = true; });
+  dragHandle.addEventListener('mouseup', () => { card.draggable = false; });
+  hdr.appendChild(dragHandle);
 
   const dot = document.createElement('div');
   dot.className = 'color-dot';
@@ -818,6 +858,51 @@ document.getElementById('global-deadline').addEventListener('change', function()
   state.targetDate = this.value;
   scheduleSave();
   renderAll();
+});
+
+// ── Reorder (drag & drop) ──────────────────────────────────────────────────
+let dragMode = false;
+let dragSrcId = null;
+
+document.getElementById('reorder-toggle').addEventListener('click', () => {
+  dragMode = !dragMode;
+  document.getElementById('reorder-toggle').classList.toggle('active', dragMode);
+  document.getElementById('module-list').classList.toggle('drag-mode', dragMode);
+});
+
+document.getElementById('module-list').addEventListener('dragstart', e => {
+  const card = e.target.closest('.module-card');
+  if (!card) return;
+  dragSrcId = card.dataset.id;
+  setTimeout(() => card.classList.add('dragging'), 0);
+});
+
+document.getElementById('module-list').addEventListener('dragend', e => {
+  const card = e.target.closest('.module-card');
+  if (card) { card.classList.remove('dragging'); card.draggable = false; }
+  document.querySelectorAll('.module-card.drag-over').forEach(c => c.classList.remove('drag-over'));
+});
+
+document.getElementById('module-list').addEventListener('dragover', e => {
+  e.preventDefault();
+  const card = e.target.closest('.module-card');
+  if (!card || card.dataset.id === dragSrcId) return;
+  document.querySelectorAll('.module-card.drag-over').forEach(c => c.classList.remove('drag-over'));
+  card.classList.add('drag-over');
+});
+
+document.getElementById('module-list').addEventListener('drop', e => {
+  e.preventDefault();
+  const card = e.target.closest('.module-card');
+  if (!card || card.dataset.id === dragSrcId) return;
+  const srcIdx = state.modules.findIndex(m => m.id === dragSrcId);
+  const dstIdx = state.modules.findIndex(m => m.id === card.dataset.id);
+  if (srcIdx === -1 || dstIdx === -1) return;
+  const [moved] = state.modules.splice(srcIdx, 1);
+  state.modules.splice(dstIdx, 0, moved);
+  renderModules();
+  document.getElementById('module-list').classList.toggle('drag-mode', dragMode);
+  scheduleSave();
 });
 
 // ── Add module ─────────────────────────────────────────────────────────────
