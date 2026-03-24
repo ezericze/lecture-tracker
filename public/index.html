@@ -56,6 +56,19 @@
     color: var(--muted);
     transition: color .2s;
   }
+  #header-right { display: flex; align-items: center; gap: 10px; }
+  #manual-save-btn {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 5px 14px;
+    border-radius: 6px;
+    border: 1.5px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  #manual-save-btn:hover { background: var(--accent); color: #fff; }
   #save-indicator.saving { color: var(--amber); }
   #save-indicator.saved  { color: var(--green); }
   #save-indicator.failed { color: var(--red); }
@@ -393,7 +406,10 @@
 
 <header>
   <h1>Lecture Tracker</h1>
-  <span id="save-indicator"></span>
+  <div id="header-right">
+    <span id="save-indicator"></span>
+    <button id="manual-save-btn">Save</button>
+  </div>
 </header>
 
 <div class="container">
@@ -519,6 +535,11 @@ function scheduleSave() {
   setSaveState('saving');
   saveTimer = setTimeout(doSave, 800);
 }
+
+document.getElementById('manual-save-btn').addEventListener('click', () => {
+  clearTimeout(saveTimer);
+  doSave();
+});
 
 function setSaveState(s) {
   const el = document.getElementById('save-indicator');
